@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -80,22 +80,22 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white font-sans overflow-hidden">
+    <div className="flex min-h-screen flex-col overflow-hidden bg-black font-sans text-white">
       {/* Header */}
-      <header className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-black/80 backdrop-blur-xl sticky top-0 z-40">
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-black/80 px-6 py-4 backdrop-blur-xl">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-vivid-purple flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-black" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-vivid-purple">
+            <Sparkles className="h-5 w-5 text-black" />
           </div>
-          <h1 className="font-display text-2xl tracking-tighter uppercase text-vivid-purple">NeoCanvas</h1>
+          <h1 className="font-display text-2xl tracking-tighter text-vivid-purple uppercase">NeoCanvas</h1>
         </div>
-        <button className="p-2 rounded-full glass transition-colors">
-          <User className="w-5 h-5" />
+        <button className="glass rounded-full p-2 transition-colors">
+          <User className="h-5 w-5" />
         </button>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-24 px-4 pt-4">
+      <main className="flex-1 overflow-y-auto px-4 pt-4 pb-24">
         <AnimatePresence mode="wait">
           {activeTab === 'discover' && (
             <motion.div
@@ -105,19 +105,19 @@ export default function App() {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-6"
             >
-              <h2 className="font-display text-5xl uppercase tracking-tighter">Discover</h2>
+              <h2 className="font-display text-5xl tracking-tighter uppercase">Discover</h2>
               <div className="grid grid-cols-2 gap-4">
                 {DISCOVER_DATA.map((item, i) => (
                   <div key={i} className={cn("rounded-2xl glass overflow-hidden relative group", item.ratio === '3:4' ? "aspect-[3/4]" : "aspect-square")}>
                     <img
                       src={`https://picsum.photos/seed/${item.seed}/600/${item.ratio === '3:4' ? 800 : 600}`}
                       alt="Trending"
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
-                      <p className="text-[9px] uppercase tracking-widest text-vivid-purple font-bold mb-1">Inspiration</p>
-                      <p className="text-xs line-clamp-2 font-bold leading-tight">{item.prompt}</p>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-4">
+                      <p className="mb-1 font-bold tracking-widest text-[9px] text-vivid-purple uppercase">Inspiration</p>
+                      <p className="line-clamp-2 text-xs leading-tight font-bold">{item.prompt}</p>
                     </div>
                   </div>
                 ))}
@@ -153,17 +153,17 @@ export default function App() {
             >
               <div className="flex items-center justify-between">
                 <h2 className="font-display text-5xl tracking-tighter uppercase">Studio</h2>
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">{history.length} ITEMS</span>
+                <span className="font-bold tracking-[0.2em] text-[10px] text-white/40 uppercase">{history.length} ITEMS</span>
               </div>
               
               {history.length === 0 ? (
-                <div className="py-20 flex flex-col items-center justify-center text-center space-y-6">
-                  <div className="w-20 h-20 rounded-[32px] glass flex items-center justify-center">
-                    <ImageIcon className="w-10 h-10 text-vivid-purple opacity-40" />
+                <div className="flex flex-col items-center justify-center space-y-6 py-20 text-center">
+                  <div className="glass flex h-20 w-20 items-center justify-center rounded-[32px]">
+                    <ImageIcon className="h-10 w-10 text-vivid-purple opacity-40" />
                   </div>
                   <div className="space-y-2">
                     <p className="text-xl font-bold">No creations yet</p>
-                    <p className="text-white/40 text-sm max-w-[200px]">Your masterpiece gallery is waiting for your first idea</p>
+                    <p className="max-w-[200px] text-sm text-white/40">Your masterpiece gallery is waiting for your first idea</p>
                   </div>
                   <button 
                     onClick={() => setActiveTab('generate')}
@@ -178,13 +178,13 @@ export default function App() {
                     <motion.div
                       layoutId={img.id}
                       key={img.id}
-                      className="aspect-square rounded-3xl glass overflow-hidden relative cursor-pointer group"
+                      className="glass group relative aspect-square cursor-pointer overflow-hidden rounded-3xl"
                       onClick={() => setSelectedImage(img)}
                     >
-                      <img src={img.url} alt={img.prompt} className="w-full h-full object-cover transition-transform group-hover:scale-105" referrerPolicy="no-referrer" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                         <div className="w-12 h-12 rounded-full glass flex items-center justify-center">
-                            <PlusCircle className="w-6 h-6 text-white" />
+                      <img src={img.url} alt={img.prompt} className="h-full w-full object-cover transition-transform group-hover:scale-105" referrerPolicy="no-referrer" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                         <div className="glass flex h-12 w-12 items-center justify-center rounded-full">
+                            <PlusCircle className="h-6 w-6 text-white" />
                          </div>
                       </div>
                     </motion.div>
@@ -209,24 +209,24 @@ export default function App() {
             
             <motion.div 
                layoutId={selectedImage.id}
-               className="relative z-10 w-full max-w-lg mx-auto aspect-square px-4"
+               className="relative z-10 mx-auto aspect-square w-full max-w-lg px-4"
             >
-              <img src={selectedImage.url} alt={selectedImage.prompt} className="w-full h-full object-contain rounded-3xl shadow-2xl shadow-neon-lime/20" referrerPolicy="no-referrer" />
+              <img src={selectedImage.url} alt={selectedImage.prompt} className="shadow-neon-lime/20 h-full w-full rounded-3xl object-contain shadow-2xl" referrerPolicy="no-referrer" />
             </motion.div>
 
             <motion.div 
               initial={{ y: 200, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 200, opacity: 0 }}
-              className="relative z-10 mt-auto glass border-t border-white/20 rounded-t-[40px] px-8 pt-8 pb-16 flex flex-col space-y-8"
+              className="glass relative z-10 mt-auto flex flex-col space-y-8 rounded-t-[40px] border-t border-white/20 px-8 pt-8 pb-16"
             >
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-vivid-purple font-bold">Generation Detail</p>
-                  <p className="text-xl font-bold tracking-tight pr-4 leading-tight">{selectedImage.prompt}</p>
+                  <p className="font-bold tracking-[0.2em] text-[9px] text-vivid-purple uppercase">Generation Detail</p>
+                  <p className="pr-4 text-xl leading-tight font-bold tracking-tight">{selectedImage.prompt}</p>
                 </div>
                 <button onClick={() => setSelectedImage(null)} className="p-4 glass rounded-full hover:bg-white/10">
-                  <X className="w-6 h-6" />
+                  <X className="h-6 w-6" />
                 </button>
               </div>
 
@@ -267,18 +267,18 @@ export default function App() {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-28 inset-x-6 z-[100]"
+            className="fixed inset-x-6 bottom-28 z-[100]"
           >
-            <div className="glass bg-red-500/10 border-red-500/20 px-6 py-3 rounded-full flex items-center justify-between shadow-2xl">
-              <p className="text-xs font-bold text-red-500 uppercase tracking-widest">Storage Full: Rotating History</p>
-              <button onClick={() => setStorageWarning(false)}><X className="w-4 h-4 text-red-500" /></button>
+            <div className="glass flex items-center justify-between rounded-full border-red-500/20 bg-red-500/10 px-6 py-3 shadow-2xl">
+              <p className="text-xs font-bold tracking-widest text-red-500 uppercase">Storage Full: Rotating History</p>
+              <button onClick={() => setStorageWarning(false)}><X className="h-4 w-4 text-red-500" /></button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Tab Navigation */}
-      <nav className="fixed bottom-0 inset-x-0 bg-black/80 backdrop-blur-3xl border-t border-white/10 py-4 px-10 flex justify-between items-center z-50 h-24">
+      <nav className="fixed inset-x-0 bottom-0 z-50 flex h-24 items-center justify-between border-t border-white/10 bg-black/80 px-10 py-4 backdrop-blur-3xl">
         <NavButton active={activeTab === 'discover'} icon={Compass} label="Explore" onClick={() => setActiveTab('discover')} />
         <div className="relative -top-10">
            <button 
@@ -288,7 +288,7 @@ export default function App() {
                activeTab === 'generate' && "scale-125 bg-white text-black border-white shadow-white/20"
              )}
            >
-             <PlusCircle className="w-8 h-8" />
+             <PlusCircle className="h-8 w-8" />
            </button>
         </div>
         <NavButton active={activeTab === 'gallery'} icon={ImageIcon} label="Studio" onClick={() => setActiveTab('gallery')} />
@@ -301,20 +301,20 @@ function NavButton({ active, icon: Icon, label, onClick }: { active: boolean, ic
   return (
     <button onClick={onClick} className={cn("flex flex-col items-center gap-1.5 transition-all", active ? "text-vivid-purple" : "text-white/40 hover:text-white")}>
       <Icon className={cn("w-6 h-6", active && "animate-pulse")} />
-      <span className="text-[9px] font-bold tracking-[0.2em] uppercase">{label}</span>
-      {active && <motion.div layoutId="nav-dot" className="w-1.5 h-1.5 rounded-full bg-vivid-purple mt-0.5" />}
+      <span className="font-bold tracking-[0.2em] text-[9px] uppercase">{label}</span>
+      {active && <motion.div layoutId="nav-dot" className="mt-0.5 h-1.5 w-1.5 rounded-full bg-vivid-purple" />}
     </button>
   );
 }
 
 function ActionButton({ icon: Icon, label, onClick, variant = 'default' }: { icon: any, label: string, onClick: () => void, variant?: 'default' | 'danger' }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-3 group">
+    <button onClick={onClick} className="group flex flex-col items-center gap-3">
       <div className={cn(
         "w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 active:scale-95",
         variant === 'danger' ? "bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white" : "glass text-white/70 hover:bg-white/20 hover:text-white"
       )}>
-        <Icon className="w-5 h-5" />
+        <Icon className="h-5 w-5" />
       </div>
       <span className={cn("text-[10px] font-bold uppercase tracking-widest", variant === 'danger' ? "text-red-500" : "text-white/40")}>{label}</span>
     </button>
@@ -326,17 +326,17 @@ function GeneratorComponent({ onGenerate, isGenerating, setIsGenerating, initial
 
   return (
     <div className="space-y-10">
-      <div className="space-y-4 relative">
-        <div className="absolute -top-10 -left-10 w-40 h-40 bg-vivid-purple/20 blur-[80px] rounded-full pointer-events-none" />
+      <div className="relative space-y-4">
+        <div className="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-vivid-purple/20 blur-[80px]" />
         <h2 className={cn("text-massive")}>
           Creative<br/><span className="text-vivid-purple">Studios</span>
         </h2>
-        <p className="text-white/40 text-xs font-bold uppercase tracking-[0.2em] max-w-[280px]">
+        <p className="max-w-[280px] text-xs font-bold tracking-[0.2em] text-white/40 uppercase">
           Access your professional image generation suites directly
         </p>
       </div>
 
-      <div className="flex gap-2 glass p-1 rounded-full w-fit">
+      <div className="glass flex w-fit gap-2 rounded-full p-1">
         <button 
           onClick={() => setEngine('gemini')}
           className={cn(
@@ -361,20 +361,20 @@ function GeneratorComponent({ onGenerate, isGenerating, setIsGenerating, initial
         key={engine}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full h-[85vh] rounded-[40px] overflow-hidden glass border border-white/10 relative shadow-2xl"
+        className="glass relative h-[85vh] w-full overflow-hidden rounded-[40px] border border-white/10 shadow-2xl"
       >
-        <div className="absolute top-0 inset-x-0 h-12 bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center px-6 justify-between z-10">
+        <div className="absolute inset-x-0 top-0 z-10 flex h-12 items-center justify-between border-b border-white/5 bg-black/40 px-6 backdrop-blur-md">
           <div className="flex items-center gap-2">
-             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-             <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+             <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+             <span className="font-bold tracking-widest text-[10px] text-white/40 uppercase">
                Live: {engine === 'gemini' ? 'ai-image-generator-restricted' : 'ai-image-generator-unrestricted'}
              </span>
           </div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-vivid-purple">Secure Proxy Active</p>
+          <p className="font-bold tracking-widest text-[10px] text-vivid-purple uppercase">Secure Proxy Active</p>
         </div>
         <iframe 
-          src={engine === 'gemini' ? "/api/proxy/perchance-restricted" : "/api/proxy/perchance-unrestricted"} 
-          className="w-full h-full pt-12"
+            src={engine === 'gemini' ? "https://null.perchance.org/ai-image-generator-restricted" : "https://null.perchance.org/ai-image-generator-unrestricted"} 
+          className="h-full w-full pt-12"
           title="Perchance Studio"
         />
       </motion.div>
