@@ -3,14 +3,22 @@
  * Pulls from our custom Perchance proxy backend.
  */
 
-export async function generateUnrestrictedImage(prompt: string, aspectRatio: string = "1:1"): Promise<string> {
+export interface PerchanceParams {
+  prompt: string;
+  negativePrompt?: string;
+  guidanceScale?: number;
+  seed?: number;
+  aspectRatio?: string;
+}
+
+export async function generateUnrestrictedImage(params: PerchanceParams): Promise<string> {
   try {
     const response = await fetch("/api/perchance/generate", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ prompt, aspectRatio }),
+      body: JSON.stringify(params),
     });
 
     if (!response.ok) throw new Error("Server proxy failed");

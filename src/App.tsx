@@ -323,10 +323,23 @@ function ActionButton({ icon: Icon, label, onClick, variant = 'default' }: { ico
 
 function GeneratorComponent({ onGenerate, isGenerating, setIsGenerating, initialImage, onClearInitial, onImageImport }: { onGenerate: (img: GeneratedImage) => void, isGenerating: boolean, setIsGenerating: (v: boolean) => void, initialImage?: GeneratedImage | null, onClearInitial?: () => void, onImageImport?: (img: GeneratedImage) => void }) {
   const [prompt, setPrompt] = useState(initialImage?.prompt || '');
+  const [negativePrompt, setNegativePrompt] = useState('');
+  const [guidanceScale, setGuidanceScale] = useState(7);
+  const [seed, setSeed] = useState<number | string>('');
   const [aspectRatio, setAspectRatio] = useState(initialImage?.aspectRatio || '1:1');
+  const [style, setStyle] = useState('none');
   const [engine, setEngine] = useState<'gemini' | 'unrestricted'>('gemini');
+  const [viewMode, setViewMode] = useState<'ui' | 'site'>('ui');
   const [lastResult, setLastResult] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const STYLES = [
+    { id: 'none', label: 'Raw' },
+    { id: 'anime', label: 'Anime', prompt: 'anime style, vibrant, detailed eyes' },
+    { id: 'photo', label: 'Reality', prompt: 'photorealistic, 8k, raw photo, highly detailed' },
+    { id: 'digital', label: 'DigiArt', prompt: 'digital painting, concept art, artstation' },
+    { id: 'cyber', label: 'Cyberpunk', prompt: 'cyberpunk aesthetic, neon lighting, futuristic' },
+  ];
 
   useEffect(() => {
     if (initialImage) {
@@ -363,9 +376,19 @@ function GeneratorComponent({ onGenerate, isGenerating, setIsGenerating, initial
       if (initialImage) {
         url = await editImage(initialImage.url, prompt);
       } else if (engine === 'unrestricted') {
-        url = await generateUnrestrictedImage(prompt, aspectRatio);
+        const stylePrefix = STYLES.find(s => s.id === style)?.prompt || '';
+        const finalPrompt = stylePrefix ? `${stylePrefix}, ${prompt}` : prompt;
+        url = await generateUnrestrictedImage({
+          prompt: finalPrompt,
+          negativePrompt,
+          guidanceScale,
+          seed: seed === '' ? -1 : Number(seed),
+          aspectRatio
+        });
       } else {
-        url = await generateImage(prompt, aspectRatio);
+        const stylePrefix = STYLES.find(s => s.id === style)?.prompt || '';
+        const finalPrompt = stylePrefix ? `${stylePrefix}, ${prompt}` : prompt;
+        url = await generateImage(finalPrompt, aspectRatio);
       }
       
       const newImg: GeneratedImage = {
@@ -387,8 +410,6 @@ function GeneratorComponent({ onGenerate, isGenerating, setIsGenerating, initial
       console.error(e);
       if (engine === 'unrestricted') {
         alert('Unrestricted engine is busy. Our fallback system will try to render your prompt now.');
-        // The fallback is already handled in the service/proxy by returning a Pollinations link
-        // but we want to make sure the user knows why it might look different.
       } else {
         alert('Generation failed. Please try a different prompt.');
       }
@@ -427,28 +448,81 @@ function GeneratorComponent({ onGenerate, isGenerating, setIsGenerating, initial
         )}
       </div>
 
-      <div className="flex gap-2 glass p-1 rounded-full w-fit">
-        <button 
-          onClick={() => setEngine('gemini')}
-          className={cn(
-            "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
-            engine === 'gemini' ? "bg-white text-black" : "text-white/40 hover:text-white"
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-2 glass p-1 rounded-full w-fit">
+          <button 
+            onClick={() => setEngine('gemini')}
+            className={cn(
+              "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
+              engine === 'gemini' ? "bg-white text-black" : "text-white/40 hover:text-white"
+            )}
+          >
+            Pro Engine
+          </button>
+          <button 
+            onClick={() => setEngine('unrestricted')}
+            className={cn(
+              "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
+              engine === 'unrestricted' ? "bg-vivid-purple text-white shadow-lg shadow-vivid-purple/20" : "text-white/40 hover:text-white"
+            )}
+          >
+            Unrestricted (Perchance)
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {engine === 'unrestricted' && (
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex gap-2 glass p-1 rounded-full w-fit"
+            >
+              <button 
+                onClick={() => setViewMode('ui')}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all",
+                  viewMode === 'ui' ? "bg-white/20 text-white" : "text-white/40 hover:text-white"
+                )}
+              >
+                Custom UI
+              </button>
+              <button 
+                onClick={() => setViewMode('site')}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all gap-1.5 flex items-center",
+                  viewMode === 'site' ? "bg-white/20 text-white" : "text-white/40 hover:text-white"
+                )}
+              >
+                <div className={cn("w-1.5 h-1.5 rounded-full bg-green-500", viewMode === 'site' && "animate-pulse")} />
+                Live Website
+              </button>
+            </motion.div>
           )}
-        >
-          Pro Engine
-        </button>
-        <button 
-          onClick={() => setEngine('unrestricted')}
-          className={cn(
-            "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
-            engine === 'unrestricted' ? "bg-vivid-purple text-white shadow-lg shadow-vivid-purple/20" : "text-white/40 hover:text-white"
-          )}
-        >
-          Unrestricted (Perchance-Style)
-        </button>
+        </AnimatePresence>
       </div>
 
-      <div className="space-y-8">
+      {engine === 'unrestricted' && viewMode === 'site' ? (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full h-[800px] rounded-[40px] overflow-hidden glass border border-white/10 relative"
+        >
+          <div className="absolute top-0 inset-x-0 h-12 bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center px-6 justify-between z-10">
+            <div className="flex items-center gap-2">
+               <div className="w-2 h-2 rounded-full bg-green-500" />
+               <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Proxied: perchance.org</span>
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-vivid-purple">Secure Channel Active</p>
+          </div>
+          <iframe 
+            src="/api/proxy/perchance" 
+            className="w-full h-full pt-12"
+            title="Perchance Proxy"
+          />
+        </motion.div>
+      ) : (
+        <div className="space-y-8">
         {initialImage && (
           <div className="relative aspect-square w-32 rounded-3xl overflow-hidden neon-border mx-auto p-1 bg-[#111]">
             <img src={initialImage.url} alt="Reference" className="w-full h-full object-cover rounded-[22px] opacity-60" />
@@ -461,9 +535,12 @@ function GeneratorComponent({ onGenerate, isGenerating, setIsGenerating, initial
           </div>
         )}
 
-        <div className="relative flex flex-col gap-4">
+        <div className="relative flex flex-col gap-6">
           <div className="glass p-8 rounded-[40px] focus-within:neon-border transition-all">
-             <p className='text-[10px] uppercase tracking-[0.2em] text-vivid-purple font-bold mb-4'>Prompt Engine v4.0</p>
+             <div className="flex justify-between items-center mb-4">
+                <p className='text-[10px] uppercase tracking-[0.2em] text-vivid-purple font-bold'>Prompt Engine v4.0</p>
+                {engine === 'unrestricted' && <p className="text-[10px] text-white/20 uppercase font-bold tracking-widest">Perchance Clone Mode</p>}
+             </div>
              <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -471,6 +548,55 @@ function GeneratorComponent({ onGenerate, isGenerating, setIsGenerating, initial
                 className="w-full bg-transparent border-none text-2xl font-bold focus:ring-0 resize-none h-32 placeholder:text-white/10"
               />
           </div>
+
+          <AnimatePresence>
+            {engine === 'unrestricted' && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden space-y-6"
+              >
+                <div className="glass p-6 rounded-[30px] border border-white/5 space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold ml-2">Negative Prompt</label>
+                    <input 
+                      type="text"
+                      value={negativePrompt}
+                      onChange={(e) => setNegativePrompt(e.target.value)}
+                      placeholder="What to exclude... (e.g. blurry, low quality)"
+                      className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-vivid-purple outline-none transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold ml-2">Guidance Scale: {guidanceScale}</label>
+                      <input 
+                        type="range"
+                        min="1"
+                        max="20"
+                        step="0.5"
+                        value={guidanceScale}
+                        onChange={(e) => setGuidanceScale(Number(e.target.value))}
+                        className="w-full accent-vivid-purple"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold ml-2">Custom Seed</label>
+                      <input 
+                        type="number"
+                        value={seed}
+                        onChange={(e) => setSeed(e.target.value)}
+                        placeholder="Random"
+                        className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-vivid-purple outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           <div className="flex flex-wrap gap-2">
             {['1:1', '4:3', '16:9', '9:16'].map((ratio) => (
@@ -485,6 +611,24 @@ function GeneratorComponent({ onGenerate, isGenerating, setIsGenerating, initial
                 {ratio}
               </button>
             ))}
+          </div>
+
+          <div className="space-y-3">
+             <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold ml-2">Artistic Direction</label>
+             <div className="flex flex-wrap gap-2">
+              {STYLES.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setStyle(s.id)}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-[10px] uppercase font-bold border transition-all tracking-wider",
+                    style === s.id ? "bg-white text-black border-white shadow-lg" : "glass text-white/40 hover:text-white border-white/5"
+                  )}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -526,6 +670,7 @@ function GeneratorComponent({ onGenerate, isGenerating, setIsGenerating, initial
           )}
         </AnimatePresence>
       </div>
+     )}
     </div>
   );
 }
