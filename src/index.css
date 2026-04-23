@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Anton", sans-serif;
+
+  --color-vivid-purple: #8B5CF6;
+  --color-glass-bg: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+}
+
+:root {
+  background-color: #050505;
+  color: #ffffff;
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-[#050505];
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-glass-bg border border-glass-border backdrop-blur-md;
+  }
+  
+  .neon-border {
+    @apply border border-vivid-purple shadow-[0_0_15px_rgba(139,92,246,0.3)];
+  }
+
+  .text-massive {
+    @apply font-display text-[100px] leading-[0.8] tracking-[-0.04em] uppercase sm:text-[140px];
+  }
+}

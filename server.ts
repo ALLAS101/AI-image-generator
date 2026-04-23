@@ -1,0 +1,98 @@
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import { createServer as createViteServer } from "vite";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+async function startServer() {
+  const app = express();
+  const PORT = 3000;
+
+  app.use(express.json());
+
+  // Perchance Proxy (Following Step 6: Handling CORS Issues from tutorial)
+  app.post("/api/perchance/generate", async (req, res) => {
+    try {
+      const { prompt, generatorName = "ai-text-to-image-generator" } = req.body;
+      
+      // Verification Key Handshake (Essential for ai-text-to-image-generator)
+      const keyRes = await fetch("https://perchance.org/api/getVerificationKey", {
+        headers: {
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        }
+      });
+      const userKey = (await keyRes.text()).trim();
+
+      // Step 2: Use the official /api-run endpoint which works for interactive generators
+      const params = new URLSearchParams();
+      params.append("prompt", prompt);
+      params.append("userKey", userKey);
+      params.append("requestId", Math.random().toString(36).substring(7));
+      
+      const genRes = await fetch(`https://experimental.perchance.org/api-run/${generatorName}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "origin": "https://perchance.org",
+          "referer": `https://perchance.org/${generatorName}`,
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+        body: params.toString()
+      });
+
+      const genText = await genRes.text();
+      
+      // Step 3: Parse result (Matching tutorial's return format: JSON array of strings)
+      const urlRegex = /(https?:\/\/[^\s"'<>]+\.(?:jpg|jpeg|png|webp|gif|svg))/i;
+      const dataUrlRegex = /(data:image\/[a-zA-Z]*;base64,[^\s"'<>]+)/i;
+      const match = genText.match(dataUrlRegex) || genText.match(urlRegex);
+      
+      if (match) {
+        const finalUrl = match[0];
+        // Fetch on server to avoid CORS in browser and return base64 for stability
+        try {
+          const imgRes = await fetch(finalUrl);
+          const buffer = await imgRes.arrayBuffer();
+          const base64Image = Buffer.from(buffer).toString('base64');
+          const mimeType = imgRes.headers.get('content-type') || 'image/png';
+          // return as array to match tutorial Step 8 data format
+          return res.json([`data:${mimeType};base64,${base64Image}`]);
+        } catch (e) {
+          return res.json([finalUrl]);
+        }
+      } else {
+        // Fallback or debug
+        const seed = Math.floor(Math.random() * 1000000);
+        const fallback = `https://pollinations.ai/p/${encodeURIComponent(prompt)}?seed=${seed}&nologo=true`;
+        res.json([fallback]);
+      }
+    } catch (error) {
+      console.error("Perchance Proxy Error:", error);
+      const seed = Math.floor(Math.random() * 1000000);
+      res.json([`https://pollinations.ai/p/${encodeURIComponent(req.body.prompt)}?seed=${seed}&nologo=true`]);
+    }
+  });
+
+  // Vite middleware for development
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+startServer();
