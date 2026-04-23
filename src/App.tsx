@@ -322,355 +322,62 @@ function ActionButton({ icon: Icon, label, onClick, variant = 'default' }: { ico
 }
 
 function GeneratorComponent({ onGenerate, isGenerating, setIsGenerating, initialImage, onClearInitial, onImageImport }: { onGenerate: (img: GeneratedImage) => void, isGenerating: boolean, setIsGenerating: (v: boolean) => void, initialImage?: GeneratedImage | null, onClearInitial?: () => void, onImageImport?: (img: GeneratedImage) => void }) {
-  const [prompt, setPrompt] = useState(initialImage?.prompt || '');
-  const [negativePrompt, setNegativePrompt] = useState('');
-  const [guidanceScale, setGuidanceScale] = useState(7);
-  const [seed, setSeed] = useState<number | string>('');
-  const [aspectRatio, setAspectRatio] = useState(initialImage?.aspectRatio || '1:1');
-  const [style, setStyle] = useState('none');
   const [engine, setEngine] = useState<'gemini' | 'unrestricted'>('gemini');
-  const [viewMode, setViewMode] = useState<'ui' | 'site'>('ui');
-  const [lastResult, setLastResult] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const STYLES = [
-    { id: 'none', label: 'Raw' },
-    { id: 'anime', label: 'Anime', prompt: 'anime style, vibrant, detailed eyes' },
-    { id: 'photo', label: 'Reality', prompt: 'photorealistic, 8k, raw photo, highly detailed' },
-    { id: 'digital', label: 'DigiArt', prompt: 'digital painting, concept art, artstation' },
-    { id: 'cyber', label: 'Cyberpunk', prompt: 'cyberpunk aesthetic, neon lighting, futuristic' },
-  ];
-
-  useEffect(() => {
-    if (initialImage) {
-      setPrompt(initialImage.prompt);
-      setAspectRatio(initialImage.aspectRatio);
-    }
-  }, [initialImage]);
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      const importedImg: GeneratedImage = {
-        id: 'imported-' + Math.random().toString(36).substr(2, 9),
-        url: base64,
-        prompt: '',
-        createdAt: Date.now(),
-        aspectRatio: '1:1'
-      };
-      onImageImport?.(importedImg);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleGenerate = async () => {
-    if (!prompt.trim() || isGenerating) return;
-    setIsGenerating(true);
-    setLastResult(null);
-    try {
-      let url: string;
-      if (initialImage) {
-        url = await editImage(initialImage.url, prompt);
-      } else if (engine === 'unrestricted') {
-        const stylePrefix = STYLES.find(s => s.id === style)?.prompt || '';
-        const finalPrompt = stylePrefix ? `${stylePrefix}, ${prompt}` : prompt;
-        url = await generateUnrestrictedImage({
-          prompt: finalPrompt,
-          negativePrompt,
-          guidanceScale,
-          seed: seed === '' ? -1 : Number(seed),
-          aspectRatio
-        });
-      } else {
-        const stylePrefix = STYLES.find(s => s.id === style)?.prompt || '';
-        const finalPrompt = stylePrefix ? `${stylePrefix}, ${prompt}` : prompt;
-        url = await generateImage(finalPrompt, aspectRatio);
-      }
-      
-      const newImg: GeneratedImage = {
-        id: Math.random().toString(36).substr(2, 9),
-        url,
-        prompt,
-        createdAt: Date.now(),
-        aspectRatio
-      };
-      setLastResult(url);
-      onGenerate(newImg);
-      confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 },
-        colors: ['#8B5CF6', '#F27D26', '#ffffff']
-      });
-    } catch (e) {
-      console.error(e);
-      if (engine === 'unrestricted') {
-        alert('Unrestricted engine is busy. Our fallback system will try to render your prompt now.');
-      } else {
-        alert('Generation failed. Please try a different prompt.');
-      }
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   return (
     <div className="space-y-10">
       <div className="space-y-4 relative">
         <div className="absolute -top-10 -left-10 w-40 h-40 bg-vivid-purple/20 blur-[80px] rounded-full pointer-events-none" />
         <h2 className={cn("text-massive")}>
-          {initialImage ? "Refine" : "Imagine"}<br/><span className="text-vivid-purple">{initialImage ? "Excellence" : "Everything"}</span>
+          Creative<br/><span className="text-vivid-purple">Studios</span>
         </h2>
         <p className="text-white/40 text-xs font-bold uppercase tracking-[0.2em] max-w-[280px]">
-          {initialImage ? "Modify your creation" : "Unleash infinite visual possibilities"}
+          Access your professional image generation suites directly
         </p>
-        {!initialImage && (
-          <div className="pt-2">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              accept="image/*" 
-              onChange={handleFileUpload} 
-            />
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-4 py-2 rounded-full glass border border-white/5 hover:border-vivid-purple transition-all group"
-            >
-              <Upload className="w-3 h-3 text-vivid-purple group-hover:animate-bounce" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Import Image to Edit</span>
-            </button>
-          </div>
-        )}
       </div>
 
-      <div className="flex flex-col gap-4">
-        <div className="flex gap-2 glass p-1 rounded-full w-fit">
-          <button 
-            onClick={() => setEngine('gemini')}
-            className={cn(
-              "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
-              engine === 'gemini' ? "bg-white text-black" : "text-white/40 hover:text-white"
-            )}
-          >
-            Pro Engine
-          </button>
-          <button 
-            onClick={() => setEngine('unrestricted')}
-            className={cn(
-              "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
-              engine === 'unrestricted' ? "bg-vivid-purple text-white shadow-lg shadow-vivid-purple/20" : "text-white/40 hover:text-white"
-            )}
-          >
-            Unrestricted (Perchance)
-          </button>
-        </div>
-
-        <AnimatePresence>
-          {engine === 'unrestricted' && (
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="flex gap-2 glass p-1 rounded-full w-fit"
-            >
-              <button 
-                onClick={() => setViewMode('ui')}
-                className={cn(
-                  "px-4 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all",
-                  viewMode === 'ui' ? "bg-white/20 text-white" : "text-white/40 hover:text-white"
-                )}
-              >
-                Custom UI
-              </button>
-              <button 
-                onClick={() => setViewMode('site')}
-                className={cn(
-                  "px-4 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all gap-1.5 flex items-center",
-                  viewMode === 'site' ? "bg-white/20 text-white" : "text-white/40 hover:text-white"
-                )}
-              >
-                <div className={cn("w-1.5 h-1.5 rounded-full bg-green-500", viewMode === 'site' && "animate-pulse")} />
-                Live Website
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {engine === 'unrestricted' && viewMode === 'site' ? (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full h-[800px] rounded-[40px] overflow-hidden glass border border-white/10 relative"
-        >
-          <div className="absolute top-0 inset-x-0 h-12 bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center px-6 justify-between z-10">
-            <div className="flex items-center gap-2">
-               <div className="w-2 h-2 rounded-full bg-green-500" />
-               <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Proxied: perchance.org</span>
-            </div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-vivid-purple">Secure Channel Active</p>
-          </div>
-          <iframe 
-            src="/api/proxy/perchance" 
-            className="w-full h-full pt-12"
-            title="Perchance Proxy"
-          />
-        </motion.div>
-      ) : (
-        <div className="space-y-8">
-        {initialImage && (
-          <div className="relative aspect-square w-32 rounded-3xl overflow-hidden neon-border mx-auto p-1 bg-[#111]">
-            <img src={initialImage.url} alt="Reference" className="w-full h-full object-cover rounded-[22px] opacity-60" />
-            <button 
-              onClick={onClearInitial}
-              className="absolute top-2 right-2 p-1.5 glass rounded-full text-white hover:text-vivid-purple"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        )}
-
-        <div className="relative flex flex-col gap-6">
-          <div className="glass p-8 rounded-[40px] focus-within:neon-border transition-all">
-             <div className="flex justify-between items-center mb-4">
-                <p className='text-[10px] uppercase tracking-[0.2em] text-vivid-purple font-bold'>Prompt Engine v4.0</p>
-                {engine === 'unrestricted' && <p className="text-[10px] text-white/20 uppercase font-bold tracking-widest">Perchance Clone Mode</p>}
-             </div>
-             <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={initialImage ? "Modify the impossible..." : "Imagine the impossible..."}
-                className="w-full bg-transparent border-none text-2xl font-bold focus:ring-0 resize-none h-32 placeholder:text-white/10"
-              />
-          </div>
-
-          <AnimatePresence>
-            {engine === 'unrestricted' && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden space-y-6"
-              >
-                <div className="glass p-6 rounded-[30px] border border-white/5 space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold ml-2">Negative Prompt</label>
-                    <input 
-                      type="text"
-                      value={negativePrompt}
-                      onChange={(e) => setNegativePrompt(e.target.value)}
-                      placeholder="What to exclude... (e.g. blurry, low quality)"
-                      className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-vivid-purple outline-none transition-all"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold ml-2">Guidance Scale: {guidanceScale}</label>
-                      <input 
-                        type="range"
-                        min="1"
-                        max="20"
-                        step="0.5"
-                        value={guidanceScale}
-                        onChange={(e) => setGuidanceScale(Number(e.target.value))}
-                        className="w-full accent-vivid-purple"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold ml-2">Custom Seed</label>
-                      <input 
-                        type="number"
-                        value={seed}
-                        onChange={(e) => setSeed(e.target.value)}
-                        placeholder="Random"
-                        className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:border-vivid-purple outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          <div className="flex flex-wrap gap-2">
-            {['1:1', '4:3', '16:9', '9:16'].map((ratio) => (
-              <button
-                key={ratio}
-                onClick={() => setAspectRatio(ratio)}
-                className={cn(
-                  "px-5 py-2 rounded-full text-[10px] uppercase font-black border transition-all tracking-widest",
-                  aspectRatio === ratio ? "bg-vivid-purple border-vivid-purple text-white" : "glass text-white/40 hover:text-white"
-                )}
-              >
-                {ratio}
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-             <label className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold ml-2">Artistic Direction</label>
-             <div className="flex flex-wrap gap-2">
-              {STYLES.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setStyle(s.id)}
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-[10px] uppercase font-bold border transition-all tracking-wider",
-                    style === s.id ? "bg-white text-black border-white shadow-lg" : "glass text-white/40 hover:text-white border-white/5"
-                  )}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={handleGenerate}
-          disabled={isGenerating || !prompt.trim()}
+      <div className="flex gap-2 glass p-1 rounded-full w-fit">
+        <button 
+          onClick={() => setEngine('gemini')}
           className={cn(
-            "w-full py-7 rounded-[40px] font-display text-3xl uppercase tracking-tighter transition-all relative overflow-hidden",
-            isGenerating ? "glass text-white/10" : "bg-white text-black hover:bg-vivid-purple hover:text-white shadow-xl shadow-vivid-purple/20 active:scale-95"
+            "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
+            engine === 'gemini' ? "bg-white text-black" : "text-white/40 hover:text-white"
           )}
         >
-          {isGenerating ? (
-             <motion.div animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.5 }}>
-               Processing...
-             </motion.div>
-          ) : (
-            "Generate Now"
-          )}
+          Pro Suite (Restricted)
         </button>
-
-        <AnimatePresence>
-          {lastResult && !isGenerating && (
-            <motion.div
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="pt-8"
-            >
-              <div className="neon-border p-1 rounded-[40px] bg-[#111] overflow-hidden group relative">
-                <div className='absolute top-6 left-6 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10 z-10'>
-                  Latest Masterpiece
-                </div>
-                <img src={lastResult} alt="Generated" className="w-full aspect-square object-cover rounded-[36px]" />
-                <div className='absolute bottom-8 left-8 right-8 flex gap-4 opacity-0 group-hover:opacity-100 transition-all transform translate-y-4 group-hover:translate-y-0'>
-                   <button className='flex-1 glass py-4 rounded-2xl font-bold text-sm uppercase tracking-wider hover:bg-white hover:text-black transition-colors'>Share</button>
-                   <button className='flex-1 bg-vivid-purple py-4 rounded-2xl font-bold text-sm uppercase tracking-wider hover:bg-white hover:text-black transition-colors'>Save</button>
-                </div>
-              </div>
-            </motion.div>
+        <button 
+          onClick={() => setEngine('unrestricted')}
+          className={cn(
+            "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
+            engine === 'unrestricted' ? "bg-vivid-purple text-white shadow-lg shadow-vivid-purple/20" : "text-white/40 hover:text-white"
           )}
-        </AnimatePresence>
+        >
+          Infinity Suite (Unrestricted)
+        </button>
       </div>
-     )}
+
+      <motion.div 
+        key={engine}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full h-[85vh] rounded-[40px] overflow-hidden glass border border-white/10 relative shadow-2xl"
+      >
+        <div className="absolute top-0 inset-x-0 h-12 bg-black/40 backdrop-blur-md border-b border-white/5 flex items-center px-6 justify-between z-10">
+          <div className="flex items-center gap-2">
+             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+             <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
+               Live: {engine === 'gemini' ? 'ai-image-generator-restricted' : 'ai-image-generator-unrestricted'}
+             </span>
+          </div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-vivid-purple">Secure Proxy Active</p>
+        </div>
+        <iframe 
+          src={engine === 'gemini' ? "/api/proxy/perchance-restricted" : "/api/proxy/perchance-unrestricted"} 
+          className="w-full h-full pt-12"
+          title="Perchance Studio"
+        />
+      </motion.div>
     </div>
   );
 }

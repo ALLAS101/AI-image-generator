@@ -12,6 +12,34 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Perchance Website Proxy for Restricted
+  app.get("/api/proxy/perchance-restricted", async (req, res) => {
+    try {
+      const resp = await fetch("https://perchance.org/ai-image-generator-restricted");
+      let html = await resp.text();
+      html = html.replace("<head>", `<head><base href="https://perchance.org/">`);
+      res.set("Content-Type", "text/html");
+      res.send(html);
+    } catch (error) {
+      console.error("Restricted Proxy Error:", error);
+      res.status(500).send("Failed to proxy the restricted generator.");
+    }
+  });
+
+  // Perchance Website Proxy for Unrestricted
+  app.get("/api/proxy/perchance-unrestricted", async (req, res) => {
+    try {
+      const resp = await fetch("https://perchance.org/ai-image-generator-unrestricted");
+      let html = await resp.text();
+      html = html.replace("<head>", `<head><base href="https://perchance.org/">`);
+      res.set("Content-Type", "text/html");
+      res.send(html);
+    } catch (error) {
+      console.error("Unrestricted Proxy Error:", error);
+      res.status(500).send("Failed to proxy the unrestricted generator.");
+    }
+  });
+
   // Perchance Website Proxy
   app.get("/api/proxy/perchance", async (req, res) => {
     try {
